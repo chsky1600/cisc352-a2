@@ -15,8 +15,8 @@
     ; Hero location and carrying status
     (hero-at loc-2-1)
 
-    ; Locationg <> Corridor Connections
-      (connected loc-2-1 loc-2-2 c2122)
+    ; Location <> Corridor Connections
+    (connected loc-2-1 loc-2-2 c2122)
     (connected loc-1-2 loc-2-2 c1222)
     (connected loc-2-2 loc-3-2 c2232)
     (connected loc-1-2 loc-1-3 c1213)
@@ -65,19 +65,18 @@
     (key-color key5 purple)
     (key-color key6 yellow)
 
-    ; Key usage properties (one use, two use, etc)
+    ; Key usage properties
     (one-use key1)
     (two-use key2)
     (one-use key3)
     (one-use key4)
     (one-use key5)
     (one-use key6)
-
   )
+
   (:goal
     (and
-      ; Hero's final location goes here
-      (hero-at loc-4-5)
+      (hero-at loc-4-5) ; The hero must reach the treasure location
     )
   )
 
