@@ -23,32 +23,58 @@
         ; One predicate given for free!
         (hero-at ?loc - location)
 
-        ; IMPLEMENT ME
+        ; room and corridor relationships
+        (connected ?from ?to - location ?cor - corridor) ; corridor connects 2 locations
+        (locked ?cor - corridor ?col - colour)  ; corridor is locked, requires key
+        (risky ?cor - corridor)  ; corridor collapses once passed through
+        (collapsed ?cor - corridor)  ; corridor has collapsed
+
+        ; key properties
+        (key-at ?k - key ?loc - location)  ; at some location
+        (holding ?k - key)  ; hero is holding this key
+        (key-color ?k - key ?col - colour)  ; is a color
+
+        ; key usage properties
+        (one-use ?k - key)  ;  can only be used once
+        (two-use ?k - key)  ;  can be used twice
+        (multi-use ?k - key)  ; can be used infinitely
+        (used ?k - key)  ;  has been used up
+
+        ; room conditions
+        (messy ?loc - location)  ; Room is messy
 
     )
 
     ; IMPORTANT: You should not change/add/remove the action names or parameters
 
     ;Hero can move if the
-    ;    - hero is at current location ?from,
-    ;    - hero will move to location ?to,
-    ;    - corridor ?cor exists between the ?from and ?to locations
-    ;    - there isn't a locked door in corridor ?cor
+    ;    - Hero is at current location ?from,
+    ;    - Hero will move to location ?to,
+    ;    - Corridor ?cor exists between the ?from and ?to locations
+    ;    - There isn't a locked door in corridor ?cor
     ;Effects move the hero, and collapse the corridor if it's "risky" (also causing a mess in the ?to location)
     (:action move
 
         :parameters (?from ?to - location ?cor - corridor)
 
         :precondition (and
-
-            ; IMPLEMENT ME
-
+            (hero-at ?from)
+            (connected ?from ?to ?cor)
+            (not (locked ?cor ?col))  ; must not be locked
+            (not (collapsed ?cor))  ; must not be collapsed
         )
 
         :effect (and
+            (not (hero-at ?from))
+            (hero-at ?to)
 
-            ; IMPLEMENT ME
-
+            ; if corridor is risky --> collapses --> dest. is now messy
+            (when (risky ?cor)
+                (and
+                    (collapsed ?cor)
+                    (messy ?to)
+                )
+            )
         )
     )
 
@@ -63,15 +89,15 @@
         :parameters (?loc - location ?k - key)
 
         :precondition (and
-
-            ; IMPLEMENT ME
-
+            (hero-at ?loc)
+            (key-at ?k ?loc)
+            (not (holding ?k))
+            (not (messy ?loc))
         )
 
         :effect (and
-
-            ; IMPLEMENT ME
-
+            (holding ?k)
+            (not (key-at ?k ?loc))
         )
     )
 
@@ -84,14 +110,13 @@
         :parameters (?loc - location ?k - key)
 
         :precondition (and
-
-            ; IMPLEMENT ME
-
+            (hero-at ?loc)
+            (holding ?k)
         )
 
         :effect (and
-
-            ; IMPLEMENT ME
+            (not (holding ?k))
+            (key-at ?k ?loc)
 
         )
     )
@@ -110,15 +135,29 @@
         :parameters (?loc - location ?cor - corridor ?col - colour ?k - key)
 
         :precondition (and
-
-            ; IMPLEMENT ME
-
+            (hero-at ?loc)
+            (holding ?k)
+            (locked ?cor ?col)
+            (key-color ?k ?col)
+            (connected ?loc ?other ?cor)
+            (or
+                (multi-use ?k)
+                (and (two-use ?k) (not (used ?k)))  ; if two-use it can be used twice
+                (and (one-use ?k) (not (used ?k)))  ; if one-use, it cannot have been used yet
+            )
         )
 
         :effect (and
+            (not (locked ?cor ?col))  ; unlock cor
 
-            ; IMPLEMENT ME
-
+            ; if key is one-use or two-use then mark it as used
+            (when (one-use ?k) (used ?k))
+            (when (two-use ?k)
+                (and
+                    (not (two-use ?k))
+                    (multi-use ?k)
+                )
+            )
         )
     )
 
@@ -131,16 +170,12 @@
         :parameters (?loc - location)
 
         :precondition (and
-
-            ; IMPLEMENT ME
-
+            (hero-at ?loc)
+            (messy ?loc)
         )
 
         :effect (and
-
-            ; IMPLEMENT ME
-
+            (not (messy ?loc))
         )
     )
-
 )
