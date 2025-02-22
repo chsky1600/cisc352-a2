@@ -25,10 +25,11 @@
 
     ;; room and corridor relationships
     (connected ?from ?to - location ?cor - corridor) ; corridor connects 2 locations
-    (locked ?cor - corridor)                        ; corridor is locked, ignoring color here
+    (locked ?cor - corridor)                      ; corridor is locked, ignoring color here
     (corr-colour ?cor - corridor ?col - colour)     ; corridor's color
+    (adjacent ?loc - location ?cor - corridor)         ; corridor is adjacent to some location
     (risky ?cor - corridor)                         ; corridor collapses once passed
-    (collapsed ?cor - corridor)                     ; corridor has collapsed
+    (collapsed ?cor - corridor)                  ; corridor has collapsed
 
     ;; key properties
     (key-at ?k - key ?loc - location)               ; key at some location
@@ -42,7 +43,9 @@
     (used ?k - key)                                 ; has been used up
 
     ;; room conditions
-    (messy ?loc - location)                         ; room is messy
+    (messy ?loc - location)                   ; room is messy
+
+    (hand-free)                                        ; hero is *not* holding a key
 
   )
 
@@ -91,10 +94,12 @@
       (key-at ?k ?loc)
       (not (holding ?k))
       (not (messy ?loc))
+      (hand-free)
     )
     :effect (and
       (holding ?k)
       (not (key-at ?k ?loc))
+      (not (hand-free))
     )
   )
 
@@ -113,6 +118,7 @@
     :effect (and
       (not (holding ?k))
       (key-at ?k ?loc)
+      (hand-free)
     )
   )
 
@@ -138,6 +144,7 @@
       (locked ?cor)
       (corr-colour ?cor ?col)
       (key-color ?k ?col)
+      (adjacent ?loc ?cor) ; adjacency check
       (or
         (multi-use ?k)
         (and (two-use ?k) (not (used ?k)))
