@@ -1,181 +1,182 @@
 (define (domain Dungeon)
 
-    (:requirements
-        :typing
-        :negative-preconditions
-        :conditional-effects
-        :equality
+  (:requirements
+    :typing
+    :negative-preconditions
+    :conditional-effects
+    :equality
+  )
+
+  ;; Do not modify the types
+  (:types
+    location colour key corridor
+  )
+
+  ;; Do not modify the constants
+  (:constants
+    red yellow green purple rainbow - colour
+  )
+
+  ;; You may introduce whatever predicates you would like to use
+  (:predicates
+
+    ;; One predicate given for free!
+    (hero-at ?loc - location)
+
+    ;; room and corridor relationships
+    (connected ?from ?to - location ?cor - corridor) ; corridor connects 2 locations
+    (locked ?cor - corridor)                        ; corridor is locked, ignoring color here
+    (corr-colour ?cor - corridor ?col - colour)     ; corridor's color
+    (risky ?cor - corridor)                         ; corridor collapses once passed
+    (collapsed ?cor - corridor)                     ; corridor has collapsed
+
+    ;; key properties
+    (key-at ?k - key ?loc - location)               ; key at some location
+    (holding ?k - key)                              ; hero is holding this key
+    (key-color ?k - key ?col - colour)              ; key's color
+
+    ;; key usage properties
+    (one-use ?k - key)                              ; can only be used once
+    (two-use ?k - key)                              ; can be used twice
+    (multi-use ?k - key)                            ; can be used infinitely
+    (used ?k - key)                                 ; has been used up
+
+    ;; room conditions
+    (messy ?loc - location)                         ; room is messy
+
+  )
+
+  ;; IMPORTANT: Do not change/add/remove the action names or parameters
+
+  ;; Hero can move if:
+  ;;  - The hero is at ?from
+  ;;  - Corridor ?cor connects ?from to ?to
+  ;;  - The corridor is not locked
+  ;;  - The corridor is not collapsed
+  ;; Effects:
+  ;;  - The hero moves from ?from to ?to
+  ;;  - If corridor is risky, it collapses and the destination becomes messy
+  (:action move
+    :parameters (?from ?to - location ?cor - corridor)
+    :precondition (and
+      (hero-at ?from)
+      (connected ?from ?to ?cor)
+      (not (locked ?cor))       ; must not be locked
+      (not (collapsed ?cor))    ; must not be collapsed
     )
-
-    ; Do not modify the types
-    (:types
-        location colour key corridor
+    :effect (and
+      (not (hero-at ?from))
+      (hero-at ?to)
+      (when (risky ?cor)
+        (and
+          (collapsed ?cor)
+          (messy ?to)
+        )
+      )
     )
+  )
 
-    ; Do not modify the constants
-    (:constants
-        red yellow green purple rainbow - colour
+  ;; Hero can pick up a key if:
+  ;;  - The hero is at ?loc
+  ;;  - The key ?k is at ?loc
+  ;;  - The hero is not already holding it
+  ;;  - The location is not messy
+  ;; Effect:
+  ;;  - The hero holds the key
+  ;;  - The key is no longer at that location
+  (:action pick-up
+    :parameters (?loc - location ?k - key)
+    :precondition (and
+      (hero-at ?loc)
+      (key-at ?k ?loc)
+      (not (holding ?k))
+      (not (messy ?loc))
     )
-
-    ; You may introduce whatever predicates you would like to use
-    (:predicates
-
-        ; One predicate given for free!
-        (hero-at ?loc - location)
-
-        ; room and corridor relationships
-        (connected ?from ?to - location ?cor - corridor) ; corridor connects 2 locations
-        (locked ?cor - corridor ?col - colour)  ; corridor is locked, requires key
-        (risky ?cor - corridor)  ; corridor collapses once passed through
-        (collapsed ?cor - corridor)  ; corridor has collapsed
-
-        ; key properties
-        (key-at ?k - key ?loc - location)  ; at some location
-        (holding ?k - key)  ; hero is holding this key
-        (key-color ?k - key ?col - colour)  ; is a color
-
-        ; key usage properties
-        (one-use ?k - key)  ;  can only be used once
-        (two-use ?k - key)  ;  can be used twice
-        (multi-use ?k - key)  ; can be used infinitely
-        (used ?k - key)  ;  has been used up
-
-        ; room conditions
-        (messy ?loc - location)  ; Room is messy
-
+    :effect (and
+      (holding ?k)
+      (not (key-at ?k ?loc))
     )
+  )
 
-    ; IMPORTANT: You should not change/add/remove the action names or parameters
-
-    ;Hero can move if the
-    ;    - Hero is at current location ?from,
-    ;    - Hero will move to location ?to,
-    ;    - Corridor ?cor exists between the ?from and ?to locations
-    ;    - There isn't a locked door in corridor ?cor
-    ;Effects move the hero, and collapse the corridor if it's "risky" (also causing a mess in the ?to location)
-    (:action move
-
-        :parameters (?from ?to - location ?cor - corridor)
-
-        :precondition (and
-            (hero-at ?from)
-            (connected ?from ?to ?cor)
-            (not (locked ?cor ?col))  ; must not be locked
-            (not (collapsed ?cor))  ; must not be collapsed
-        )
-
-        :effect (and
-            (not (hero-at ?from))
-            (hero-at ?to)
-
-            ; if corridor is risky --> collapses --> dest. is now messy
-            (when (risky ?cor)
-                (and
-                    (collapsed ?cor)
-                    (messy ?to)
-                )
-            )
-        )
+  ;; Hero can drop a key if:
+  ;;  - The hero is holding ?k
+  ;;  - The hero is at ?loc
+  ;; Effect:
+  ;;  - The hero no longer holds the key
+  ;;  - The key is left in ?loc
+  (:action drop
+    :parameters (?loc - location ?k - key)
+    :precondition (and
+      (hero-at ?loc)
+      (holding ?k)
     )
-
-    ;Hero can pick up a key if the
-    ;    - hero is at current location ?loc,
-    ;    - there is a key ?k at location ?loc,
-    ;    - the hero's arm is free,
-    ;    - the location is not messy
-    ;Effect will have the hero holding the key and their arm no longer being free
-    (:action pick-up
-
-        :parameters (?loc - location ?k - key)
-
-        :precondition (and
-            (hero-at ?loc)
-            (key-at ?k ?loc)
-            (not (holding ?k))
-            (not (messy ?loc))
-        )
-
-        :effect (and
-            (holding ?k)
-            (not (key-at ?k ?loc))
-        )
+    :effect (and
+      (not (holding ?k))
+      (key-at ?k ?loc)
     )
+  )
 
-    ;Hero can drop a key if the
-    ;    - hero is holding a key ?k,
-    ;    - the hero is at location ?loc
-    ;Effect will be that the hero is no longer holding the key
-    (:action drop
-
-        :parameters (?loc - location ?k - key)
-
-        :precondition (and
-            (hero-at ?loc)
-            (holding ?k)
-        )
-
-        :effect (and
-            (not (holding ?k))
-            (key-at ?k ?loc)
-
-        )
+  ;; Hero can unlock a locked corridor if:
+  ;;  - The hero is at ?loc
+  ;;  - The hero is holding key ?k
+  ;;  - Corridor ?cor is locked
+  ;;  - Corridor ?cor is associated with colour ?col
+  ;;  - Key ?k has colour ?col
+  ;;  - Corridor ?cor is adjacent to hero's location ?loc
+  ;;  - The key has remaining uses:
+  ;;      * multi-use: infinite
+  ;;      * two-use: not used yet
+  ;;      * one-use: not used yet
+  ;; Effect:
+  ;;  - The corridor becomes unlocked
+  ;;  - If the key is one-use or two-use, update usage
+  (:action unlock
+    :parameters (?loc - location ?cor - corridor ?col - colour ?k - key)
+    :precondition (and
+      (hero-at ?loc)
+      (holding ?k)
+      (locked ?cor)
+      (corr-colour ?cor ?col)
+      (key-color ?k ?col)
+      (or
+        (multi-use ?k)
+        (and (two-use ?k) (not (used ?k)))
+        (and (one-use ?k) (not (used ?k)))
+      )
     )
+    :effect (and
+      (not (locked ?cor))  ; corridor is now unlocked
 
+      ;; If key is one-use, it becomes used after 1 unlock
+      (when (one-use ?k)
+        (used ?k))
 
-    ;Hero can use a key for a corridor if
-    ;    - the hero is holding a key ?k,
-    ;    - the key still has some uses left,
-    ;    - the corridor ?cor is locked with colour ?col,
-    ;    - the key ?k is if the right colour ?col,
-    ;    - the hero is at location ?loc
-    ;    - the corridor is connected to the location ?loc
-    ;Effect will be that the corridor is unlocked and the key usage will be updated if necessary
-    (:action unlock
-
-        :parameters (?loc - location ?cor - corridor ?col - colour ?k - key)
-
-        :precondition (and
-            (hero-at ?loc)
-            (holding ?k)
-            (locked ?cor ?col)
-            (key-color ?k ?col)
-            (connected ?loc ?other ?cor)
-            (or
-                (multi-use ?k)
-                (and (two-use ?k) (not (used ?k)))  ; if two-use it can be used twice
-                (and (one-use ?k) (not (used ?k)))  ; if one-use, it cannot have been used yet
-            )
+      ;; If key is two-use, we transform it into a multi-use key 
+      ;; after first use. (A common approach: 2->1->used, or 
+      ;; 2->multi. This is your chosen modeling approach.)
+      (when (two-use ?k)
+        (and
+          (not (two-use ?k))
+          (multi-use ?k)
         )
-
-        :effect (and
-            (not (locked ?cor ?col))  ; unlock cor
-
-            ; if key is one-use or two-use then mark it as used
-            (when (one-use ?k) (used ?k))
-            (when (two-use ?k)
-                (and
-                    (not (two-use ?k))
-                    (multi-use ?k)
-                )
-            )
-        )
+      )
     )
+  )
 
-    ;Hero can clean a location if
-    ;    - the hero is at location ?loc,
-    ;    - the location is messy
-    ;Effect will be that the location is no longer messy
-    (:action clean
-
-        :parameters (?loc - location)
-
-        :precondition (and
-            (hero-at ?loc)
-            (messy ?loc)
-        )
-
-        :effect (and
-            (not (messy ?loc))
-        )
+  ;; Hero can clean a messy location if:
+  ;;  - The hero is at ?loc
+  ;;  - ?loc is messy
+  ;; Effect:
+  ;;  - The location is no longer messy
+  (:action clean
+    :parameters (?loc - location)
+    :precondition (and
+      (hero-at ?loc)
+      (messy ?loc)
     )
+    :effect (and
+      (not (messy ?loc))
+    )
+  )
+
 )
