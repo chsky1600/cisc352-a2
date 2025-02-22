@@ -13,40 +13,72 @@
   (:init
 
     ; Hero location and carrying status
-    (hero-at loc-2-1)
+    (hero-at loc-2-2)
+    (hand-free)
 
-    ; Locationg <> Corridor Connections
+    ;; Corridor c2122 connecting loc-2-1 <--> loc-2-2
     (connected loc-2-1 loc-2-2 c2122)
+    (connected loc-2-2 loc-2-1 c2122)
+    (adjacent loc-2-1 c2122)
+    (adjacent loc-2-2 c2122)
+
+    ;; Corridor c1222 connecting loc-1-2 <--> loc-2-2
     (connected loc-1-2 loc-2-2 c1222)
+    (connected loc-2-2 loc-1-2 c1222)
+    (adjacent loc-1-2 c1222)
+    (adjacent loc-2-2 c1222)
+
+    ;; Corridor c2232 connecting loc-2-2 <--> loc-3-2
     (connected loc-2-2 loc-3-2 c2232)
+    (connected loc-3-2 loc-2-2 c2232)
+    (adjacent loc-2-2 c2232)
+    (adjacent loc-3-2 c2232)
+
+    ;; Corridor c3242 connecting loc-3-2 <--> loc-4-2
     (connected loc-3-2 loc-4-2 c3242)
+    (connected loc-4-2 loc-3-2 c3242)
+    (adjacent loc-3-2 c3242)
+    (adjacent loc-4-2 c3242)
+
+    ;; Corridor c2223 connecting loc-2-2 <--> loc-2-3
     (connected loc-2-2 loc-2-3 c2223)
+    (connected loc-2-3 loc-2-2 c2223)
+    (adjacent loc-2-2 c2223)
+    (adjacent loc-2-3 c2223)
 
     ; Key locations
-    (key-at key1 loc-1-2)
-    (key-at key2 loc-2-3)
-    (key-at key3 loc-3-2)
-    (key-at key4 loc-4-2)
+    (key-at key1 loc-2-1)
+    (key-at key2 loc-1-2)
+    (key-at key3 loc-2-2)
+    (key-at key4 loc-2-3)
 
     ; Locked corridors
-    (locked c2232 red)
-    (locked c2223 green)
-    (locked c3242 purple)
+    (locked c1222)
+    (corr-colour c1222 yellow) 
 
-    ; Risky corridors
-    (risky c1222)
+    (locked c2232)
+    (corr-colour c2232 yellow) 
+
+    (locked c2223)
+    (corr-colour c2223 green)
+
+    (locked c2122)
+    (corr-colour c2122 purple) 
+
+    (locked c3242)
+    (corr-colour c3242 rainbow) 
 
     ; Key colours
-    (key-color key1 red)
-    (key-color key2 green)
-    (key-color key3 green)
-    (key-color key4 purple)
+    (key-color key1 green)
+    (key-color key2 rainbow)
+    (key-color key3 purple)
+    (key-color key4 yellow)
 
     ; Key usage properties (one use, two use, etc)
     (one-use key1)
-    (two-use key2)
+    (one-use key2)
     (one-use key3)
-    (one-use key4)
+    (two-use key4)
 
   )
   (:goal
